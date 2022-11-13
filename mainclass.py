@@ -10,18 +10,19 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.chrome.options import Options
 from typing import List
-import re
+import re ,sqlite3
+from MyPyQt5 import QObject,pyqtSignal
 
+class Twitter(QObject):
+    LeadSignal = pyqtSignal(list)
 
-
-class Twitter():
     WA_REGEX = r"(https?:\/\/)?chat\.whatsapp\.com\/(?:invite\/)?([a-zA-Z0-9_-]{22})"
     TYPE_TOP = ""
     TYPE_LATEST = "&f=live"
     TYPE_PHOTO = "&f=image"
     TYPE_VEDIO = "&f=video"
     SCROLL_TO_LAST_HIGHT = "window.scrollTo(0,document.body.scrollHeight);return document.body.scrollHeight;"
-    SCROLL_TO = f"window.scrollTo(0,hight);return hight"
+    SCROLL_TO = f"window.scrollTo(0,hight);return hight ;"
     SCROLL_TO_BOTTOM = "window.scrollTo(0,0);return 0;"
     CLICK_SHOW_BUTTON = """var btn = document.querySelectorAll("div[class='css-1dbjc4n r-1ndi9ce'] div div span span");btn[1].click();"""
     CLICK_SHOW_BUTTON_0 = """var btn = document.querySelectorAll("div[class='css-1dbjc4n r-1ndi9ce'] div div span span");btn[0].click();"""
@@ -39,6 +40,9 @@ class Twitter():
     GET_DESC = """return tweets[index].querySelector("div[data-testid='tweetText']").textContent;"""
 
     def __init__(self,headless) -> None:
+        super().__init__()
+        self.con = sqlite3.connect("Data\Database.db")
+        self.cur = self.con.cursor()
         options = Options()
         options.headless = headless
         self.driver = webdriver.Chrome(ChromeDriverManager().install(),options=options)
@@ -155,6 +159,7 @@ class Twitter():
     def scroll_to_maxhight(self):
         while True:
             page_old = self.driver.page_source
+            
             sleep(1)
             self.jscode(self.SCROLL_TO_LAST_HIGHT)
             if page_old == self.driver.page_source :
@@ -195,10 +200,70 @@ class Twitter():
             handles_list = [*set(handles_list)]
         return handles_list
 
-    def search(self,keyword,type):
-        self.driver.get(f"https://twitter.com/search?q=chat.whatsapp.com {keyword}&src=typed_query{type}")
+        
 
-##############################
+
+########################## -----------------------
+
+    def exist(self,table,column,val):
+        self.cur.execute(f"""SELECT * FROM {table} WHERE {column} = '{val}'; """)
+        return True if self.cur.fetchall() != [] else False
+
+
+    def scrape_URL_Reply(self,id_main:str,handle_main:str):
+        self.driver.get(f"https://twitter.com/{handle_main}/status/{id_main}")
+        self.scroll_to_maxhight()
+        self.wait_elms("//div[@data-testid='cellInnerDiv']")
+        self.jscode(self.CLICK_SHOW_BUTTON_0)
+        sleep(2)
+        print("\nshow button pressed ... \n")
+        current_loc = self.jscode(self.SCROLL_TO_BOTTOM)
+        max_loc = self.jscode(self.MAX_HIGHT)
+        while current_loc < max_loc:
+            print(f"Current location = {current_loc} \t Max hight = {max_loc}")
+            tweets = self.jscode(self.GET_TWEETS)
+            for index in range(1,len(tweets)):
+                id = self.jscode(self.GET_ID.replace("index",f"{index}")).split("/status/")[-1]
+                handle = self.jscode(self.GET_HANDLE.replace("index",f"{index}"))
+                desc = self.jscode(self.GET_DESC.replace("index",f"{index}"))
+                try:
+                    link = re.search(self.WA_REGEX,desc).group()
+                    self.LeadSignal.emit([id,handle,desc,link])
+                    print([id,handle,desc,link])
+                except Exception as e :
+                    print(e)
+                    self.LeadSignal.emit([id,handle,desc])
+                    print([id,handle,desc])
+            current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 1000}"))
+            max_loc = self.jscode(self.MAX_HIGHT)
+
+        
+
+
+
+
+
+########################## ----------------------------
+
+    def add_to_db(self,table,**kwargs):
+        try:
+            self.cur.execute(f"""
+            INSERT INTO {table} {str(tuple(kwargs.keys())).replace("'","")}
+            VALUES {tuple(kwargs.values())}; """)
+            self.con.commit()
+        except sqlite3.IntegrityError:
+            return False
+        except sqlite3.OperationalError:
+            return False
+
+    def add_lead_to_db(self):
+        
+
+        pass
+
+########################### ----------------------
+    def search_URL_KeyWord(self,keyword,type,Link_Regex):
+        self.driver.get(f"https://twitter.com/search?q=chat.whatsapp.com {keyword}&src=typed_query{type}")
         current_loc = self.jscode(self.SCROLL_TO_BOTTOM)
         max_loc = self.jscode(self.MAX_HIGHT)
         while current_loc < max_loc:
@@ -212,17 +277,58 @@ class Twitter():
                 handle = self.jscode(self.GET_HANDLE.replace("index",f"{index}"))
                 desc = self.jscode(self.GET_DESC.replace("index",f"{index}"))
                 try:
-                    link = re.search(self.WA_REGEX,desc).group()
+                    link = re.search(Link_Regex,desc).group()
+                    self.LeadSignal.emit([id,handle,desc,link])
                     print([id,handle,desc,link])
                 except Exception as e :
                     print(e)
+                    self.LeadSignal.emit([id,handle,desc])
                     print([id,handle,desc])
             sleep(5)
             current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 1200}"))
             max_loc = self.jscode(self.MAX_HIGHT)
 
 
-##############################
+########################## -----------------------
+
+    def search_URL_handle(self,handle):
+        self.driver.get(f"https://twitter.com/{handle}/with_replies")
+        self.wait_elms("//div[@data-testid='cellInnerDiv']")
+        tweets = self.jscode(self.GET_TWEETS)
+        for index in range(len(tweets)):
+            id_main = self.jscode(self.GET_ID.replace("index",index))
+            handle_main = self.jscode(self.GET_HANDLE.replace("index",index))
+
+            if not self.exist("handle","ID",f"{id_main}"):
+                
+                pass
+                
+
+
+        # self.scroll_to_maxhight()
+        # self.wait_elms("//div[@data-testid='cellInnerDiv']")
+        # self.jscode(self.CLICK_SHOW_BUTTON)
+        # print("show button pressed ... ")
+        # handles_list = []
+        # current_loc = self.jscode(self.SCROLL_TO_BOTTOM)
+        # max_loc = self.jscode(self.MAX_HIGHT)
+        # while current_loc < max_loc:
+        #     print(f"Current location = {current_loc} \t Max hight = {max_loc}")
+        #     handles = self.jscode(self.HANDLES_AND_NAMES_CODE)
+        #     for handle in handles:
+        #         try:
+        #             print(f"handle is ( {handles[handles.index(handle)-1].text},{handle.text} )")
+        #             if handle.text != '' and "@" in handle.text :
+        #                 handles_list.append((handles[handles.index(handle)-1].text,handle.text))
+        #         except:
+        #             print("none ...")
+        #             pass
+        #     current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 2000}"))
+        #     max_loc = self.jscode(self.MAX_HIGHT)
+
+
+
+
 
 
 
@@ -237,12 +343,10 @@ class Twitter():
         self.driver.quit()
         
 
-
 t = Twitter(False)
-t.search("تاسى",t.TYPE_TOP)
-
-
-
+t.scrape_URL_Reply("1591717921713426432","fahadmutadawul")
+print("\n\n \tDone")
+sleep(20)
 # textex = ".\n#شاهد\n\n مقطع قصير\n\n| الحبيب علي الجفري |  صيام عرفة يغفر كل ذنب إلا هذا النوع من الذنوب |\n\n#الحج #يوم_عرفة #مكة_المكرمة #dmc #مساءdmc\n\nhttps://fb.watch/e2Tf8eh5ES/\nوتس\nhttps://chat.whatsapp.com/EgclmZAgmlO9UYAJYI4zI4"
 # x = re.search(Twitter.WA_REGEX,textex)
 # print(x.group())
