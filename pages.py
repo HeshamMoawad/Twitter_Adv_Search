@@ -24,6 +24,7 @@ class Page1(object):
         self.HandleLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.horizontalLayout.addWidget(self.HandleLabel)
         self.lineEdit = QtWidgets.QLineEdit(self.HandleFrame)
+        self.lineEdit.setStyleSheet("background-color:white;color:black;")
         self.lineEdit.setPlaceholderText("@Handle ......")
         self.lineEdit.textChanged.connect(lambda : self.KeyWordLineEdit.setDisabled(True) if "@" in self.lineEdit.text() else self.KeyWordLineEdit.setDisabled(False) )
         self.horizontalLayout.addWidget(self.lineEdit)
@@ -57,6 +58,7 @@ class Page1(object):
         self.horizontalLayout_3.addWidget(self.KeyWordLabel)
         self.KeyWordLineEdit = QtWidgets.QLineEdit(self.KeyWord_Frame)
         self.KeyWordLineEdit.setPlaceholderText("KeyWord Here .....")
+        self.KeyWordLineEdit.setStyleSheet("background-color:white;color:black;")
         self.KeyWordLineEdit.textChanged.connect(lambda :  self.lineEdit.setDisabled(True) if self.KeyWordLineEdit.text().__len__() > 0 else self.lineEdit.setDisabled(False) ) #self.lineEdit.setDisabled(False) 
         self.horizontalLayout_3.addWidget(self.KeyWordLineEdit)
         self.horizontalLayout_3.setContentsMargins(0,0,0,0)
@@ -91,6 +93,7 @@ class Page1(object):
         self.CounterLabel.setText("Counter : 0")
         self.CounterLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.treewidget = MyQTreeWidget(parent)   # TreeWidget 
+        self.treewidget.setStyleSheet("background-color:white;color:black;")
         self.treewidget.setColumns(["Links","Handle","Description"])
         self.treewidget.onLengthChanged.connect(self.counter)
         self.treewidget.setColumnWidth(0,250)

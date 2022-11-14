@@ -107,7 +107,7 @@ class AnimatedToggle(QCheckBox):
     def __init__(self,
         parent=None,
         bar_color=Qt.gray,
-        checked_color="#00B0FF",
+        checked_color="#c21919",#c21919 #00B0FF
         handle_color=Qt.white,
         pulse_unchecked_color="#44999999",
         pulse_checked_color="#4400B0EE"
@@ -267,6 +267,7 @@ class QSideMenuNewStyle(QWidget):
         self.MenuButton.setFlat(True)
         self.MenuButton.setFixedHeight(self.TopFrame.height()-15)
         self.MenuButton.setStyleSheet(Styles.BUTTON)
+        # self.MenuButton.setStyleSheet("color:#f2dbba;")
         self.horizontalLayout_2.addWidget(self.MenuButton, 1, Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignCenter)
         self.MainLabel = QLabel(self.TopFrame)
         self.MainLabel.setText("")
@@ -502,6 +503,7 @@ class MyThread(QThread):
     def kill(self,msg:typing.Optional[bool], mainclass:typing.Optional[Twitter]):
         if self.isRunning():
             if mainclass != None :
+                mainclass.con.close()
                 mainclass.exit()
             self.terminate()
             self.wait()

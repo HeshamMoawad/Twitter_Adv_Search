@@ -9,14 +9,14 @@ class Styles():
     """
     BUTTON = """
     QPushButton{
-        color:black;
+        color:#f2dbba;
         background-color: transparent;
         border:none;
         border-radius:3px;
     }
     QPushButton:hover{
-        color:black;
-        background-color:white;
+        color:#c21919;
+        background-color:black;
         
     }
     QPushButton:pressed{
