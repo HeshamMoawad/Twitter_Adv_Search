@@ -3,6 +3,7 @@ from PyQt5 import QtCore, QtWidgets
 import typing , pyperclip
 from datetime import datetime
 from MyPyQt5 import MyQTreeWidget , MyCustomContextMenu , MyMessageBox
+# from PyQt5.QtGui import QKeySequence
 
 
 class Page1(object):
@@ -24,24 +25,25 @@ class Page1(object):
         self.horizontalLayout.addWidget(self.HandleLabel)
         self.lineEdit = QtWidgets.QLineEdit(self.HandleFrame)
         self.lineEdit.setPlaceholderText("@Handle ......")
+        self.lineEdit.textChanged.connect(lambda : self.KeyWordLineEdit.setDisabled(True) if "@" in self.lineEdit.text() else self.KeyWordLineEdit.setDisabled(False) )
         self.horizontalLayout.addWidget(self.lineEdit)
-        self.LimitLabel = QtWidgets.QLabel(self.HandleFrame)
-        self.LimitLabel.setText("Limit")
-        self.LimitLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.horizontalLayout.addWidget(self.LimitLabel)
-        self.LimitSpinBox = QtWidgets.QSpinBox(self.HandleFrame)
-        self.LimitSpinBox.setMaximum(10000)
-        self.LimitSpinBox.setMinimum(2)
-        self.LimitSpinBox.setValue(10)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-        # sizePolicy.setHeightForWidth(self.LimitSpinBox.sizePolicy().hasHeightForWidth())
-        self.LimitSpinBox.setSizePolicy(sizePolicy)
-        self.horizontalLayout.addWidget(self.LimitSpinBox)
+        # self.LimitLabel = QtWidgets.QLabel(self.HandleFrame)
+        # self.LimitLabel.setText("Limit")
+        # self.LimitLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        # self.horizontalLayout.addWidget(self.LimitLabel)
+        # self.LimitSpinBox = QtWidgets.QSpinBox(self.HandleFrame)
+        # self.LimitSpinBox.setMaximum(10000)
+        # self.LimitSpinBox.setMinimum(2)
+        # self.LimitSpinBox.setValue(10)
+        # sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        # # sizePolicy.setHeightForWidth(self.LimitSpinBox.sizePolicy().hasHeightForWidth())
+        # self.LimitSpinBox.setSizePolicy(sizePolicy)
+        # self.horizontalLayout.addWidget(self.LimitSpinBox)
         self.horizontalLayout.setContentsMargins(0,0,0,0)
         self.horizontalLayout.setStretch(0,1)
         self.horizontalLayout.setStretch(1,3)
-        self.horizontalLayout.setStretch(2,1)
-        self.horizontalLayout.setStretch(3,0)
+        # self.horizontalLayout.setStretch(2,1)
+        # self.horizontalLayout.setStretch(3,0)
         self.verticalLayout.addWidget(self.HandleFrame)
 #################################  sec Frame (KeyWord_Frame)
         
@@ -55,10 +57,11 @@ class Page1(object):
         self.horizontalLayout_3.addWidget(self.KeyWordLabel)
         self.KeyWordLineEdit = QtWidgets.QLineEdit(self.KeyWord_Frame)
         self.KeyWordLineEdit.setPlaceholderText("KeyWord Here .....")
+        self.KeyWordLineEdit.textChanged.connect(lambda :  self.lineEdit.setDisabled(True) if self.KeyWordLineEdit.text().__len__() > 0 else self.lineEdit.setDisabled(False) ) #self.lineEdit.setDisabled(False) 
         self.horizontalLayout_3.addWidget(self.KeyWordLineEdit)
         self.horizontalLayout_3.setContentsMargins(0,0,0,0)
         self.horizontalLayout_3.setStretch(0,1)
-        self.horizontalLayout_3.setStretch(1,2)
+        self.horizontalLayout_3.setStretch(1,3)
         self.verticalLayout.addWidget(self.KeyWord_Frame)
 
 
@@ -93,7 +96,7 @@ class Page1(object):
         self.treewidget.setColumnWidth(0,250)
         self.treewidget.setColumnWidth(1,100)
         self.treewidget.setColumnWidth(2,250)
-        self.treewidget.appendData(items=["d","a","g"])
+        self.treewidget.appendData(items=["d","d","a","f"])
         self.treewidget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.treewidget.customContextMenuRequested.connect(self.menu)
         self.verticalLayout.addWidget(self.treewidget)
@@ -132,6 +135,7 @@ class Page1(object):
         "Copy All", # 9
         "Clear Results", # 10
         ])
+        # menu.connectShortcut(3,QKeySequence("Ctrl+e"))
         menu.multiConnect(functions=[
             lambda : self.copy(0), # 0
             lambda : self.copy(1), # 1
@@ -145,6 +149,7 @@ class Page1(object):
             lambda: pyperclip.copy(self.treewidget.extract_data_to_DataFrame().to_string(index=False)) if self.treewidget._ROW_INDEX != 0 else self.msg.showWarning(text="No Data Found !") , # 9
             self.treewidget.clear , # 10
         ])
+        
         menu.show()
 
     def copy(self , index:int):
@@ -165,6 +170,11 @@ class Page1(object):
             self.msg.showInfo(text=f"Exported Succecfully to 'Data/Exports/{name}[{datetime.now().date()}].xlsx'")
         else :
             self.msg.showWarning(text="No Data In App Please Try Again Later")
+
+    def text_connection(self):
+        self.lineEdit.setDisabled(True) if len(self.lineEdit.text()) > 0 else self.lineEdit.setDisabled(False)
+
+
 class Page2(object):
     def __init__(self,parent:typing.Optional[QtWidgets.QWidget]) -> None:
         self.groupBox = QtWidgets.QGroupBox(parent) # MainGroupBox

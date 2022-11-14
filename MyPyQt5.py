@@ -7,7 +7,7 @@ from PyQt5.QtCore import (QCoreApplication, QEasingCurve, QPoint, QPointF,
 from PyQt5.QtGui import QBrush, QColor,QCursor, QIcon, QPainter, QPaintEvent, QPen
 from PyQt5.QtWidgets import *
 from styles import Styles
-
+from mainclass import Twitter
 
 
 
@@ -43,7 +43,7 @@ class MyQTreeWidget(QTreeWidget,QWidget):
     def extract_columns(self,lista)->str:
         return self.extract_data_to_DataFrame()[[self.COLUMN_NAMES[i] for i in lista]].to_string(index=False)
 
-    def appendData(self,items:list=None,childs:list=None)->None:
+    def appendData(self,items:typing.Optional[list],childs:typing.Optional[list]=None)-> None:
         item_ = QTreeWidgetItem(self)
         for i in range(self.columnCount()):
             self.topLevelItem(self._ROW_INDEX).setText(i,items[i])
@@ -474,10 +474,16 @@ class MyCustomContextMenu(QObject):
 
     def connect(self ,index_of_Action:int,func)-> None  :
         self.Actions[index_of_Action].triggered.connect(func)
+
+    def connectShortcut(self ,index_of_Action:int,shortcut)-> None  :
+        self.Actions[index_of_Action].setShortcut(shortcut)
+        
+
         
     def multiConnect(self,functions:typing.List[typing.Callable] , range_of:typing.Optional[range]=None):
         for Action in (range(len(self.Actions)) if range_of == None else range_of):
             self.Actions[Action].triggered.connect(functions[Action])
+
 
     def show(self):
         cur = QCursor()
@@ -489,12 +495,14 @@ class MyCustomContextMenu(QObject):
 class MyThread(QThread):
     statues = pyqtSignal(str)
 
-    def __init__(self, parent: typing.Optional[QObject] = ...) -> None:
-        super().__init__(parent)
+    def __init__(self) -> None:
+        super().__init__()
         self.msg = MyMessageBox()
 
-    def kill(self,msg:bool=False):
+    def kill(self,msg:typing.Optional[bool], mainclass:typing.Optional[Twitter]):
         if self.isRunning():
+            if mainclass != None :
+                mainclass.exit()
             self.terminate()
             self.wait()
             if msg:

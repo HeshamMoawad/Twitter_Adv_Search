@@ -232,33 +232,47 @@ class Twitter(QObject):
         self.scroll_to_maxhight()
         self.wait_elms("//div[@data-testid='cellInnerDiv']")
         sleep(2)
-        print("\nshow button pressed ... \n")
-        current_loc = self.jscode(self.SCROLL_TO_BOTTOM)
-        max_loc = self.jscode(self.MAX_HIGHT)
-        while current_loc < max_loc:
-            print(f"Current location = {current_loc} \t Max hight = {max_loc}")
+        # current_loc = self.jscode(self.SCROLL_TO_BOTTOM)
+        # max_loc = self.jscode(self.MAX_HIGHT)
+        # oldpage = self.driver.page_source
+        # newpage = ""
+        while True:#current_loc < max_loc
+            oldpage = self.driver.page_source
+            print("Looop ")
+            # print(f"Current location = {current_loc} \t Max hight = {max_loc}")
             tweets = self.jscode(self.GET_TWEETS)
             for index in range(1,len(tweets)):
+                print("Mini Looop ")
                 try:
                     id = self.jscode(self.GET_ID.replace("index",f"{index}")).split("/status/")[-1]
                     con = True
                 except Exception as e :
                     con = False
-                if con:
-                    handle = self.jscode(self.GET_HANDLE.replace("index",f"{index}"))
+                handle = self.jscode(self.GET_HANDLE.replace("index",f"{index}"))
+                try :
                     desc = self.jscode(self.GET_DESC.replace("index",f"{index}"))
+                except Exception as e :
+                    con = False
+                    print(f"\n\n\n{e}\n\n\n")
+                if con :
                     if not self.exist("handle","ID_Reply",id):
                         try:
-                            data = [id,handle,desc,link]
                             link = re.search(self.WA_REGEX,desc).group()
+                            data = [link,handle,desc,id]
                             print(f'\n\n{data}\n\n')
                         except Exception as e :
-                            data = [id,handle,desc,None]
+                            data = [None,handle,desc,id]
                             print('None')
+                            print(f'\n\n{e}\n\n')
                         self.LeadSignal.emit(data)
                         self.add_to_db("handle",**self.add_lead_to_db_from_reply([id_main,handle_main],data))
-            current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 1000}"))
-            max_loc = self.jscode(self.MAX_HIGHT)
+            self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 1000}"))
+            if oldpage == self.driver.page_source:
+                print("Breaked")
+                break
+                
+            
+            # max_loc = self.jscode(self.MAX_HIGHT)
 
         
 ########################## ----------------------------
@@ -275,11 +289,11 @@ class Twitter(QObject):
 
 
     def add_lead_to_db_from_reply(self,parent:list,data:list):
-        return {"ID":parent[0],"Handle":parent[1] ,"ID_Reply":data[0],"Handle_Reply":data[1],"Description":data[2],"Link":str(data[3]),"Time":f"{datetime.now().date()}"}
+        return {"ID":parent[0],"Handle":parent[1] ,"ID_Reply":data[3],"Handle_Reply":data[1],"Description":data[2],"Link":str(data[0]),"Time":f"{datetime.now().date()}"}
     
     
     def add_lead_to_db_from_keyword(self,data:list):
-        return {"ID":data[0],"Handle":data[1],"Description":data[2],"Link":str(data[3]),"Time":f"{datetime.now().date()}"}
+        return {"ID":data[3],"Handle":data[1],"Description":data[2],"Link":str(data[0]),"Time":f"{datetime.now().date()}"}
 
         
 
@@ -296,19 +310,24 @@ class Twitter(QObject):
             print("before for loop ---")
             print(tweets)
             for index in range(len(tweets)):
-                id = self.jscode(self.GET_ID.replace("index",f"{index}")).split("/status/")[-1]
-                handle = self.jscode(self.GET_HANDLE.replace("index",f"{index}"))
-                desc = self.jscode(self.GET_DESC.replace("index",f"{index}"))
-                if not self.exist("keyword","ID",id):
-                    try:
-                        data = [id,handle,desc,link]
-                        link = re.search(Link_Regex,desc).group()
-                        
-                    except Exception as e :
-                        data = [id,handle,desc,None]
-                        print(data)
-                    self.LeadSignal.emit(data)
-                    self.add_to_db("keyword",**self.add_lead_to_db_from_keyword(data))
+                try :
+                    id = self.jscode(self.GET_ID.replace("index",f"{index}")).split("/status/")[-1]
+                    con = True
+                except Exception as e :
+                    con = False
+                if con :
+                    handle = self.jscode(self.GET_HANDLE.replace("index",f"{index}"))
+                    desc = self.jscode(self.GET_DESC.replace("index",f"{index}"))
+                    if not self.exist("keyword","ID",id):
+                        try:
+                            link = re.search(Link_Regex,desc).group()
+                            data = [link,handle,desc,id]
+                        except Exception as e :
+                            print(f"\n\n\n{e}\n\n\n")
+                            data = [None,handle,desc,id]
+                            print(data)
+                        self.LeadSignal.emit(data)
+                        self.add_to_db("keyword",**self.add_lead_to_db_from_keyword(data))
             sleep(5)
             current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 1200}"))
             max_loc = self.jscode(self.MAX_HIGHT)
@@ -322,6 +341,7 @@ class Twitter(QObject):
         current_loc = self.jscode(self.SCROLL_TO_BOTTOM)
         max_loc = self.jscode(self.MAX_HIGHT)
         while current_loc < max_loc:
+            print("\n\tHandle Loooop ")
             tweets = self.jscode(self.GET_TWEETS)
             for index in range(len(tweets)):
                 try :
@@ -332,27 +352,22 @@ class Twitter(QObject):
                 if con:
                     handle_main = self.jscode(self.GET_HANDLE.replace("index",str(index)))
                     if not self.exist("handle","ID",f"{id_main}"):
+                        print(f"\n\n {id_main}\n\n")
                         self.scrape_URL_Reply(id_main,handle_main)
-            sleep(5)
-            current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 1000}"))
+                        self.driver.back()
+            sleep(3)
+            current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 1200}"))
             max_loc = self.jscode(self.MAX_HIGHT)
-
+        print("While looop Endad from main Handle")
                 
 
     def exit(self):
-        try:
-            self.wait_elm("//*[@id='react-root']/div/div/div[2]/header/div/div/div/div[2]/div/div/div/div/div[2]/div/div[2]/div/div/div[4]/div",timeout=5).click()
-            self.wait_elm("//*[@id='layers']/div[2]/div/div/div[2]/div/div[2]/div/div/div/div/div/a[2]/div[1]/div/span",timeout=5).click()
-            self.wait_elm("//*[@id='layers']/div[2]/div/div/div/div/div/div[2]/div[2]/div[2]/div[1]/div",timeout=5).click()
-        except:
-            pass
-        sleep(2)
         self.driver.quit()
         
 
-t = Twitter(False)
-t.search_URL_handle("29_shg")
-# t.scrape_URL_Reply("1591717921713426432","fahadmutadawul")
-print("\n\n \t Done")
-sleep(20)
+# t = Twitter(False)
+# t.search_URL_handle("29_shg")
+# # t.scrape_URL_Reply("1591717921713426432","fahadmutadawul")
+# print("\n\n \t Done")
+# sleep(20)
 
