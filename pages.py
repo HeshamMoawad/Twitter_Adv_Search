@@ -9,6 +9,7 @@ from MyPyQt5 import MyQTreeWidget , MyCustomContextMenu , MyMessageBox
 class Page1(object):
 
     def __init__(self,parent:typing.Optional[QtWidgets.QWidget]):
+        self.parent = parent
         self.msg = MyMessageBox()
         self.Name = ""
         self.verticalLayout = QtWidgets.QVBoxLayout(parent)
@@ -26,25 +27,11 @@ class Page1(object):
         self.lineEdit = QtWidgets.QLineEdit(self.HandleFrame)
         self.lineEdit.setStyleSheet("background-color:white;color:black;")
         self.lineEdit.setPlaceholderText("@Handle ......")
-        self.lineEdit.textChanged.connect(lambda : self.KeyWordLineEdit.setDisabled(True) if "@" in self.lineEdit.text() else self.KeyWordLineEdit.setDisabled(False) )
+        self.lineEdit.textChanged.connect(self.text_Changed_Slot_handle)
         self.horizontalLayout.addWidget(self.lineEdit)
-        # self.LimitLabel = QtWidgets.QLabel(self.HandleFrame)
-        # self.LimitLabel.setText("Limit")
-        # self.LimitLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        # self.horizontalLayout.addWidget(self.LimitLabel)
-        # self.LimitSpinBox = QtWidgets.QSpinBox(self.HandleFrame)
-        # self.LimitSpinBox.setMaximum(10000)
-        # self.LimitSpinBox.setMinimum(2)
-        # self.LimitSpinBox.setValue(10)
-        # sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-        # # sizePolicy.setHeightForWidth(self.LimitSpinBox.sizePolicy().hasHeightForWidth())
-        # self.LimitSpinBox.setSizePolicy(sizePolicy)
-        # self.horizontalLayout.addWidget(self.LimitSpinBox)
         self.horizontalLayout.setContentsMargins(0,0,0,0)
         self.horizontalLayout.setStretch(0,1)
         self.horizontalLayout.setStretch(1,3)
-        # self.horizontalLayout.setStretch(2,1)
-        # self.horizontalLayout.setStretch(3,0)
         self.verticalLayout.addWidget(self.HandleFrame)
 #################################  sec Frame (KeyWord_Frame)
         
@@ -59,7 +46,7 @@ class Page1(object):
         self.KeyWordLineEdit = QtWidgets.QLineEdit(self.KeyWord_Frame)
         self.KeyWordLineEdit.setPlaceholderText("KeyWord Here .....")
         self.KeyWordLineEdit.setStyleSheet("background-color:white;color:black;")
-        self.KeyWordLineEdit.textChanged.connect(lambda :  self.lineEdit.setDisabled(True) if self.KeyWordLineEdit.text().__len__() > 0 else self.lineEdit.setDisabled(False) ) #self.lineEdit.setDisabled(False) 
+        self.KeyWordLineEdit.textChanged.connect( self.text_Changed_Slot_keyword) #self.lineEdit.setDisabled(False) 
         self.horizontalLayout_3.addWidget(self.KeyWordLineEdit)
         self.horizontalLayout_3.setContentsMargins(0,0,0,0)
         self.horizontalLayout_3.setStretch(0,1)
@@ -79,6 +66,7 @@ class Page1(object):
         self.StartButton.setShortcut("Enter")
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
         self.StartButton.setSizePolicy(sizePolicy)
+        self.StartButton.setDisabled(True)
         self.horizontalLayout_2.addWidget(self.StartButton)
         self.StopButton = QtWidgets.QPushButton(self.Buttons_Frame) # StopButton
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
@@ -99,7 +87,6 @@ class Page1(object):
         self.treewidget.setColumnWidth(0,250)
         self.treewidget.setColumnWidth(1,100)
         self.treewidget.setColumnWidth(2,250)
-        self.treewidget.appendData(items=["d","d","a","f"])
         self.treewidget.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.treewidget.customContextMenuRequested.connect(self.menu)
         self.verticalLayout.addWidget(self.treewidget)
@@ -112,16 +99,35 @@ class Page1(object):
         self.verticalLayout.setStretch(2, 1)  # buttons frame
         self.verticalLayout.setStretch(3, 10) # treewidget
         self.verticalLayout.setStretch(4, 1)  # label count
+    
+    def setStyleSheet(self,style:str):
+        self.parent.setStyleSheet(style)
+        
+    def text_Changed_Slot_handle(self):
+        if self.lineEdit.text().__len__() > 0:
+            self.KeyWordLineEdit.setDisabled(True)
+            self.StartButton.setDisabled(False)
+        else :
+            self.KeyWordLineEdit.setDisabled(False)
+            self.StartButton.setDisabled(True)
+
+    def text_Changed_Slot_keyword(self):
+        if self.KeyWordLineEdit.text().__len__() > 0:
+            self.lineEdit.setDisabled(True)
+            self.StartButton.setDisabled(False)
+        else :
+            self.lineEdit.setDisabled(False)
+            self.StartButton.setDisabled(True)
+
+
 
     def counter(self,count:int):
         self.CounterLabel.setText(f"Counter : {count}")
 
-    @property
     def key(self):
         return self.Name
 
-    @key.setter
-    def key(self,val):
+    def setKey(self,val):
         self.Name = val
 
     def menu(self):
@@ -174,8 +180,8 @@ class Page1(object):
         else :
             self.msg.showWarning(text="No Data In App Please Try Again Later")
 
-    def text_connection(self):
-        self.lineEdit.setDisabled(True) if len(self.lineEdit.text()) > 0 else self.lineEdit.setDisabled(False)
+    # def text_connection(self):
+    #     self.lineEdit.setDisabled(True) if len(self.lineEdit.text()) > 0 else self.lineEdit.setDisabled(False)
 
 
 class Page2(object):

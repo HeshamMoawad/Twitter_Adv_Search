@@ -13,7 +13,7 @@ from typing import List
 import re ,sqlite3
 from MyPyQt5 import QObject,pyqtSignal
 from datetime import datetime
-
+from selenium.common.exceptions import TimeoutException
 
 
 
@@ -29,7 +29,7 @@ class Twitter(QObject):
     TYPE_PHOTO = "&f=image"
     TYPE_VEDIO = "&f=video"
     SCROLL_TO_LAST_HIGHT = "window.scrollTo(0,document.body.scrollHeight);return document.body.scrollHeight;"
-    SCROLL_TO = f"window.scrollTo(0,hight);return hight"
+    SCROLL_TO = f"window.scrollTo(0,hight);return window.pageYOffset;"
     SCROLL_TO_BOTTOM = "window.scrollTo(0,0);return 0;"
     CLICK_SHOW_BUTTON = """var btn = document.querySelectorAll("div[class='css-1dbjc4n r-1ndi9ce'] div div span span");btn[1].click();"""
     CLICK_SHOW_BUTTON_0 = """var btn = document.querySelectorAll("div[class='css-1dbjc4n r-1ndi9ce'] div div span span");btn[0].click();"""
@@ -236,15 +236,17 @@ class Twitter(QObject):
             oldpage = self.driver.page_source
             print("Looop ")
             tweets = self.jscode(self.GET_TWEETS)
-            for index in range(1,len(tweets)):
+            for index in range(0,len(tweets)):
                 print("Mini Looop ")
                 try:
                     id = self.jscode(self.GET_ID.replace("index",f"{index}")).split("/status/")[-1]
                     desc = self.jscode(self.GET_DESC.replace("index",f"{index}"))
                     con = True
+                    print("succeceful")
                 except Exception as e :
                     print(f"\n\n\n{e}\n\n\n")
                     con = False
+
                 handle = self.jscode(self.GET_HANDLE.replace("index",f"{index}"))
                 if con :
                     if not self.exist("handle","ID_Reply",id):
@@ -259,10 +261,8 @@ class Twitter(QObject):
 
                         self.add_to_db("handle",**self.add_lead_to_db_from_reply([id_main,handle_main],data))
                         self.LeadSignal.emit(data)
-                        
-            self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 500}"))
+            self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 1000}"))
             sleep(3)
-
             if oldpage == self.driver.page_source:
                 print("Breaked")
                 break
@@ -302,29 +302,34 @@ class Twitter(QObject):
         max_loc = self.jscode(self.MAX_HIGHT)
         while current_loc < max_loc:
             print(f"Current location = {current_loc} \t Max hight = {max_loc}")
-            self.wait_elms("//div[@data-testid='cellInnerDiv']")
-            tweets = self.jscode(self.GET_TWEETS)
-            print("before for loop ---")
-            print(tweets)
-            for index in range(len(tweets)):
-                try :
-                    id = self.jscode(self.GET_ID.replace("index",f"{index}")).split("/status/")[-1]
-                    con = True                    
-                except Exception as e :
-                    con = False
-                if con :
-                    handle = self.jscode(self.GET_HANDLE.replace("index",f"{index}"))
-                    desc = self.jscode(self.GET_DESC.replace("index",f"{index}"))
-                    if not self.exist("keyword","ID",id):
-                        try:
-                            link = re.search(Link_Regex,desc).group()
-                            data = [link,handle,desc,id]
-                        except Exception as e :
-                            print(f"\n\n\n{e}\n\n\n")
-                            data = [None,handle,desc,id]
-                            print(data)
-                        self.LeadSignal.emit(data)
-                        self.add_to_db("keyword",**self.add_lead_to_db_from_keyword(data))
+            try: 
+                self.wait_elms("//div[@data-testid='cellInnerDiv']",timeout=10)
+                con = True
+            except TimeoutException :
+                con = False
+            if con:
+                tweets = self.jscode(self.GET_TWEETS)
+                print("before for loop ---")
+                print(tweets)
+                for index in range(len(tweets)):
+                    try :
+                        id = self.jscode(self.GET_ID.replace("index",f"{index}")).split("/status/")[-1]
+                        con = True                    
+                    except Exception as e :
+                        con = False
+                    if con :
+                        handle = self.jscode(self.GET_HANDLE.replace("index",f"{index}"))
+                        desc = self.jscode(self.GET_DESC.replace("index",f"{index}"))
+                        if not self.exist("keyword","ID",id):
+                            try:
+                                link = re.search(Link_Regex,desc).group()
+                                data = [link,handle,desc,id]
+                            except Exception as e :
+                                print(f"\n\n\n{e}\n\n\n")
+                                data = [None,handle,desc,id]
+                                print(data)
+                            self.LeadSignal.emit(data)
+                            self.add_to_db("keyword",**self.add_lead_to_db_from_keyword(data))
             sleep(5)
             current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{self.jscode(self.GET_CURRENT_LOCATION) + 1200}"))
             max_loc = self.jscode(self.MAX_HIGHT)
@@ -335,6 +340,11 @@ class Twitter(QObject):
     def search_URL_handle(self,handle):
         self.driver.get(f"https://twitter.com/{handle}/with_replies")
         self.wait_elms("//div[@data-testid='cellInnerDiv']")
+
+
+
+
+
         current_loc = self.jscode(self.SCROLL_TO_BOTTOM)
         max_loc = self.jscode(self.MAX_HIGHT)
         while current_loc < max_loc  :
@@ -354,15 +364,21 @@ class Twitter(QObject):
                         self.add_to_db("handle",**self.add_lead_to_db_from_reply([id_main,handle_main],['None','None','None','None']))
                         print(f"\n\n {id_main}\n\n")
                         self.scrape_URL_Reply(id_main,handle_main)
-            current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{current_loc+1000}"))
-            print(f"{current_loc+1000}")
+            current_loc = self.jscode(self.SCROLL_TO.replace("hight",f"{current_loc+500}"))
             sleep(3)
             max_loc = self.jscode(self.MAX_HIGHT)
-            print(f"{current_loc+1000} {max_loc}")
+            print(f"{current_loc+1000} ---> {max_loc}")
         print("While looop Endad from main Handle")
                 
 
     def exit(self):
+        self.driver.close()
         self.driver.quit()
+
+        # self.con.close()
         
+
+
+
+
 

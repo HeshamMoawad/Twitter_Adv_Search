@@ -107,7 +107,7 @@ class AnimatedToggle(QCheckBox):
     def __init__(self,
         parent=None,
         bar_color=Qt.gray,
-        checked_color="#c21919",#c21919 #00B0FF
+        checked_color="#00B0FF",#c21919 
         handle_color=Qt.white,
         pulse_unchecked_color="#44999999",
         pulse_checked_color="#4400B0EE"
@@ -145,6 +145,14 @@ class AnimatedToggle(QCheckBox):
         self.animations_group.addAnimation(self.pulse_anim)
 
         self.stateChanged.connect(self.setup_animation)
+
+    def checkedColor(self):
+        return self._handle_checked_brush
+
+    def setCheckedColor(self,color:typing.Optional[str]):
+        self._bar_checked_brush = QBrush(QColor(color).lighter())
+        self._handle_checked_brush = QBrush(QColor(color))
+
 
     def sizeHint(self):
         return QSize(58, 45)
@@ -267,27 +275,26 @@ class QSideMenuNewStyle(QWidget):
         self.MenuButton.setFlat(True)
         self.MenuButton.setFixedHeight(self.TopFrame.height()-15)
         self.MenuButton.setStyleSheet(Styles.BUTTON)
-        # self.MenuButton.setStyleSheet("color:#f2dbba;")
         self.horizontalLayout_2.addWidget(self.MenuButton, 1, Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignCenter)
         self.MainLabel = QLabel(self.TopFrame)
         self.MainLabel.setText("")
         self.horizontalLayout_2.addWidget(self.MainLabel, 4 ,Qt.AlignmentFlag.AlignCenter|Qt.AlignmentFlag.AlignCenter)
         self.MiniButton = QPushButton(self.TopFrame)
-        self.MiniButton.setStyleSheet(Styles.BUTTON)
+        
         self.MiniButton.setFlat(True)
         self.MiniButton.setFixedSize(QSize(20,20))
         self.MiniButton.setIcon(QIcon(MiniButtonIconPath)) if MiniButtonIconPath != None else None
         self.horizontalLayout_2.addWidget(self.MiniButton, 0,Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignCenter)
         self.MiniButton.clicked.connect(parent.parent().showMinimized)
         self.MaxButton = QPushButton(self.TopFrame)
-        self.MaxButton.setStyleSheet(Styles.BUTTON)
+        
         self.MaxButton.setFlat(True)
         self.MaxButton.setFixedSize(QSize(20,20))
         self.MaxButton.setIcon(QIcon(MaxButtonIconPath)) if MaxButtonIconPath != None else None
         self.MaxButton.clicked.connect(lambda : self.max_mini(self.parent().parent(),MaxButtonIconPath,Mini_MaxButtonIconPath,ButtonsFrameFixedwidth))
         self.horizontalLayout_2.addWidget(self.MaxButton, 0,Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignCenter)
         self.ExitButton = QPushButton(self.TopFrame)
-        self.ExitButton.setStyleSheet(Styles.BUTTON)
+        
         self.ExitButton.setFlat(True)
         self.ExitButton.setFixedSize(QSize(20,20))
         self.ExitButton.setIcon(QIcon(ExitButtonIconPath)) if ExitButtonIconPath != None else None
@@ -312,7 +319,7 @@ class QSideMenuNewStyle(QWidget):
             sizePolicy.setHeightForWidth(Button.sizePolicy().hasHeightForWidth())
             Button.setFixedHeight(ButtonsFixedHight) if ButtonsFixedHight != None else None
             Button.setSizePolicy(sizePolicy)
-            Button.setStyleSheet(Styles.BUTTON)
+            # Button.setStyleSheet(Styles.BUTTON)
             if index == ButtonsCount - 1 :
                 self.verticalLayout_2.addWidget(Button ,1, Qt.AlignmentFlag.AlignTop)
             else :
@@ -333,6 +340,7 @@ class QSideMenuNewStyle(QWidget):
         self.verticalLayout_2.addWidget(self.DarkModeLabel,0,Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter)
         self.DarkModetoggle = AnimatedToggle(self.ButtonsFrame)
         self.DarkModetoggle.setShortcut("Ctrl+d")
+        self.DarkModetoggle.setCheckedColor("#c21919")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.DarkModetoggle.setSizePolicy(sizePolicy)
         self.verticalLayout_2.addWidget(self.DarkModetoggle,0,Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter)
@@ -360,7 +368,12 @@ class QSideMenuNewStyle(QWidget):
         self.MenuButton.setIcon(QIcon(DefultIconPath)) if DefultIconPath != None else None
         self.MenuButton.clicked.connect(self.MenuClick)
         self.ButtonsFrame.setFixedWidth(0)
+        self.ExitButton.setStyleSheet(Styles.BUTTON)
+        self.MaxButton.setStyleSheet(Styles.BUTTON)
+        self.MiniButton.setStyleSheet(Styles.BUTTON)
+
         self.setCurrentPage(0)
+    
 
     @pyqtProperty(int)
     def Width(self):
@@ -500,12 +513,13 @@ class MyThread(QThread):
         super().__init__()
         self.msg = MyMessageBox()
 
-    def kill(self,msg:typing.Optional[bool], mainclass:typing.Optional[Twitter]):
+    def kill(self,msg:typing.Optional[bool]):
         if self.isRunning():
-            if mainclass != None :
-                mainclass.con.close()
-                mainclass.exit()
             self.terminate()
+            try :
+                self.Twitter.exit()
+            except AttributeError :
+                pass
             self.wait()
             if msg:
                 self.msg.showInfo(text="Stopped")

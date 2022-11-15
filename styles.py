@@ -10,13 +10,62 @@ class Styles():
     BUTTON = """
     QPushButton{
         color:#f2dbba;
+        background-color:white;
+        border:none;
+        border-radius:3px;
+    }
+    QPushButton:hover{
+        color:#c21919;
+        background-color:gray;
+        
+    }
+    QPushButton:pressed{
+        color:black;
+        background-color: white;
+    }
+     """
+    BUTTON_SIDE = """
+    QPushButton{
+        color:white;
+        background-color:transparent;
+        border:none;
+        border-radius:3px;
+    }
+    QPushButton:hover{
+        color:red;
+        background-color:gray;
+    }
+    QPushButton:pressed{
+        color:black;
+        background-color: white;
+    }
+     """
+    BUTTON_SIDE_ = """
+    QPushButton{
+        color:#f2dbba;
+        background-color:transparent;
+        border:none;
+        border-radius:3px;
+    }
+    QPushButton:hover{
+        color:red;
+        background-color:gray;
+    }
+    QPushButton:pressed{
+        color:black;
+        background-color: white;
+    }
+     """
+    BUTTON_DARK = """
+    QPushButton{
+        color:#f2dbba;
         background-color: transparent;
         border:none;
         border-radius:3px;
     }
     QPushButton:hover{
         color:#c21919;
-        background-color:black;
+        background-color:white;
         
     }
     QPushButton:pressed{
