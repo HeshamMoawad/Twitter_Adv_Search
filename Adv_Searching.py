@@ -1,5 +1,5 @@
 
-from PyQt5 import QtCore, QtWidgets 
+from PyQt5 import QtCore, QtWidgets ,QtGui
 from MyPyQt5 import  QSideMenuNewStyle ,MyThread,pyqtSignal ,MyMessageBox
 from pages import Page1 , Page2 
 from mainclass import Twitter
@@ -16,7 +16,7 @@ class MyMainWindow(object):
         self.MainWindow = MainWindow
         MainWindow.resize(800,600)
         MainWindow.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint)
-        
+        # MainWindow.setWindowIcon(QtGui.QIcon("Data\Icons\Capture.PNG"))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.Menu = QSideMenuNewStyle(
             self.centralwidget,
@@ -142,7 +142,10 @@ class Thread(MyThread):
                 self.statues.emit("Start Scrape Links From Handle")
                 handle = ui.Page1Class.lineEdit.text().replace(" ","")
                 ui.Page1Class.setKey(handle)
-                self.Twitter.search_URL_handle(handle)
+                try:
+                    self.Twitter.search_URL_handle(handle)
+                except Exception as e :
+                    self.mesg.emit(f'Error in Scrape Handle -> \n{e}')
                 self.Twitter.exit()
                 self.statues.emit("Ended")
                 self.mesg.emit("Ended")
@@ -152,7 +155,10 @@ class Thread(MyThread):
                 ui.Page1Class.setKey(keyword)
                 self.statues.emit(f"Start Scrape Links From KeyWord {keyword}")
                 for type in [self.Twitter.TYPE_TOP,self.Twitter.TYPE_LATEST,self.Twitter.TYPE_PHOTO,self.Twitter.TYPE_VEDIO]:
-                    self.Twitter.search_URL_KeyWord(keyword,type,self.Twitter.WA_REGEX)
+                    try:
+                        self.Twitter.search_URL_KeyWord(keyword,type,self.Twitter.WA_REGEX)
+                    except Exception as e :
+                        self.mesg.emit(f'Error in Scrape KeyWord with Type {type} -> \n{e}')
                 self.Twitter.exit()
                 self.statues.emit("Ended")
                 self.mesg.emit("Ended")
@@ -164,6 +170,14 @@ class Thread(MyThread):
 if __name__ == "__main__":
     import sys,requests
     app = QtWidgets.QApplication(sys.argv)
+    app_icon = QtGui.QIcon()
+    app_icon.addFile('Data\Icons\Capture.PNG', QtCore.QSize(16,16))
+    app_icon.addFile('Data\Icons\Capture.PNG', QtCore.QSize(24,24))
+    app_icon.addFile('Data\Icons\Capture.PNG', QtCore.QSize(32,32))
+    app_icon.addFile('Data\Icons\Capture.PNG', QtCore.QSize(48,48))
+    app_icon.addFile('Data\Icons\Capture.PNG', QtCore.QSize(256,256))
+    app.setWindowIcon(app_icon)
+
     MainWindow = QtWidgets.QMainWindow()
     ui = MyMainWindow()
     ui.Setup(MainWindow)
