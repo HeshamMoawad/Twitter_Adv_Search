@@ -139,8 +139,8 @@ class Thread(MyThread):
             
             self.Twitter.LeadSignal.connect(self.LeadSignal.emit)
             if ui.Page1Class.lineEdit.isEnabled():
-                self.statues.emit("Start Scrape Links From Handle")
                 handle = ui.Page1Class.lineEdit.text().replace(" ","")
+                self.statues.emit(f"Start Scrape Links From {handle}")
                 ui.Page1Class.setKey(handle)
                 try:
                     self.Twitter.search_URL_handle(handle)
