@@ -93,8 +93,11 @@ class MyMainWindow(object):
         if lead[0] != None :
             if not self.exist("links","Link",f"{lead[0]}"):
                 self.Page1Class.treewidget.appendData(items=lead)
-                self.cur.execute(f"""INSERT INTO links ('Link','Handle','Descreption','ID')VALUES("{lead[0]}","{lead[1]}","{lead[2]}","{lead[3]}");""")
-                self.con.commit()
+                try:
+                    self.cur.execute(f"""INSERT INTO links ('Link','Handle','Descreption','ID')VALUES("{lead[0]}","{lead[1]}","{lead[2]}","{lead[3]}");""")
+                    self.con.commit()
+                except Exeption as e:
+                    print(e)
                 print(f"\n{lead}\n")
 
         
