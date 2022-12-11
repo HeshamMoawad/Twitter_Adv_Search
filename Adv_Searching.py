@@ -96,7 +96,7 @@ class MyMainWindow(object):
                 try:
                     self.cur.execute(f"""INSERT INTO links ('Link','Handle','Descreption','ID')VALUES("{lead[0]}","{lead[1]}","{lead[2]}","{lead[3]}");""")
                     self.con.commit()
-                except Exeption as e:
+                except Exception as e:
                     print(e)
                 print(f"\n{lead}\n")
 
@@ -155,7 +155,9 @@ class Thread(MyThread):
 
             elif ui.Page1Class.KeyWordLineEdit.isEnabled() :
                 keyword = ui.Page1Class.KeyWordLineEdit.text()
+                print(keyword)
                 ui.Page1Class.setKey(keyword)
+                print(ui.Page1Class.key())
                 self.statues.emit(f"Start Scrape Links From KeyWord {keyword}")
                 for type in [self.Twitter.TYPE_TOP,self.Twitter.TYPE_LATEST,self.Twitter.TYPE_PHOTO,self.Twitter.TYPE_VEDIO]:
                     try:
@@ -182,6 +184,7 @@ if __name__ == "__main__":
     app.setWindowIcon(app_icon)
 
     MainWindow = QtWidgets.QMainWindow()
+    global ui
     ui = MyMainWindow()
     ui.Setup(MainWindow)
     MainWindow.show()

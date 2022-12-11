@@ -257,7 +257,7 @@ class Twitter(QObject):
 
 ########################### ----------------------
     def search_URL_KeyWord(self,keyword,type,Link_Regex):
-        self.driver.get(f"https://twitter.com/search?q=chat.whatsapp.com {keyword}&src=typed_query{type}")
+        self.driver.get(f"https://twitter.com/search?q=chat.whatsapp.com%20%23{keyword}&src=typed_query{type}")
         current_loc = self.jscode(self.SCROLL_TO_BOTTOM)
         max_loc = self.jscode(self.MAX_HIGHT)
         while current_loc < max_loc:
@@ -271,7 +271,7 @@ class Twitter(QObject):
                 tweets = self.jscode(self.GET_TWEETS)
                 print("before for loop ---")
                 for index in range(len(tweets)):
-                    info = self.get_Info(index,self.WA_REGEX)
+                    info = self.get_Info(index,Link_Regex)
                     if not info["skip"]:
                         data = info["data"]
                         print(data[-1])
